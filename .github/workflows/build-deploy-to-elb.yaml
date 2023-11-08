@@ -1,4 +1,4 @@
-name: build-deploy-To-elb
+name: build-deploy-2-elb
 
 on:
     push:
