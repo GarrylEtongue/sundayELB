@@ -1,0 +1,38 @@
+name: build-deploy-To-elb
+
+on:
+    push:
+        branches:
+            -main
+    workflow_dispatch:
+        
+jobs:
+    
+  DeployoELB:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+        
+    steps:
+
+      - name: clone to repository 
+        uses: actions/checkout@v3     
+                      
+      - name: setup java and maven
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+      - name: sonarqube analysis
+        run: mvn sonar:sonar -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY}} -Dsonar.host.url=${{secrets.SONAR_HOST_URL}} -Dsonar.login=${{secrets.SONAR_LOGIN_TOKEN}} 
+      
+      - name: maven build
+        run: mvn clean package
+        
+        #### publish the artifact to an artifact repository (github packages) 
+      - name: upload to artifact repo
+        run: mvn --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
