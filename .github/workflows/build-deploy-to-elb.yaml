@@ -35,4 +35,31 @@ jobs:
         run: mvn --batch-mode deploy
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      
+      - name: authenticate to aws
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY}}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_KEY}}
+          aws-region: ${{secrets.AWS_REGION}}
+
+          ##### Artifact should be copied to an s3 bucket
+      - name: copy artifacte to s3
+        run: aws s3 cp target/*war s3://sundaywebappbucket
+      
+      - name: create an application version
+        run: |
+         aws elasticbeanstalk create-application-version \
+         --application-name sunday-webapp \
+         --source-bundle S3Bucket="sundaywebappbucket",S3Key="xashy-webapp.war" \
+         --version-label "ver-${{ github.sha }}" \
+         --description "commit-sha-${{ github.sha }}"
+         
+      - name: deploy the app to elastic bean stalk
+        run: aws elasticbeanstalk update-environment --environment-name Sunday-webapp-env --version-label "ver-${{ github.sha }}"
+
+
+
+
+
 
